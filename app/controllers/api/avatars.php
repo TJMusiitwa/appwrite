@@ -53,11 +53,11 @@ $avatarCallback = function ($type, $code, $width, $height, $quality, $response) 
     if ($data) {
         //$output = (empty($output)) ? $type : $output;
 
-        $response
+        return $response
             ->setContentType('image/png')
             ->addHeader('Expires', $date)
             ->addHeader('X-Appwrite-Cache', 'hit')
-            ->send($data, 0)
+            ->send($data)
         ;
     }
 
@@ -67,18 +67,16 @@ $avatarCallback = function ($type, $code, $width, $height, $quality, $response) 
 
     $output = (empty($output)) ? $type : $output;
 
+    $data = $resize->output($output, $quality);
+    
+    $cache->save($key, $data);
+    
     $response
         ->setContentType('image/png')
         ->addHeader('Expires', $date)
         ->addHeader('X-Appwrite-Cache', 'miss')
-        ->send('', null)
+        ->send($data, null);
     ;
-
-    $data = $resize->output($output, $quality);
-
-    $cache->save($key, $data);
-
-    echo $data;
 
     unset($resize);
 };
@@ -158,11 +156,11 @@ App::get('/v1/avatars/image')
         $data = $cache->load($key, 60 * 60 * 24 * 7 /* 1 week */);
 
         if ($data) {
-            $response
+            return $response
                 ->setContentType('image/png')
                 ->addHeader('Expires', $date)
                 ->addHeader('X-Appwrite-Cache', 'hit')
-                ->send($data, 0)
+                ->send($data)
             ;
         }
 
@@ -185,19 +183,17 @@ App::get('/v1/avatars/image')
         $resize->crop((int) $width, (int) $height);
 
         $output = (empty($output)) ? $type : $output;
+        
+        $data = $resize->output($output, $quality);
+        
+        $cache->save($key, $data);
 
         $response
             ->setContentType('image/png')
             ->addHeader('Expires', $date)
             ->addHeader('X-Appwrite-Cache', 'miss')
-            ->send('', null)
+            ->send($data);
         ;
-
-        $data = $resize->output($output, $quality);
-
-        $cache->save($key, $data);
-
-        echo $data;
 
         unset($resize);
     }, ['response']);
@@ -226,11 +222,11 @@ App::get('/v1/avatars/favicon')
         $data = $cache->load($key, 60 * 60 * 24 * 30 * 3 /* 3 months */);
 
         if ($data) {
-            $response
+            return $response
                 ->setContentType('image/png')
                 ->addHeader('Expires', $date)
                 ->addHeader('X-Appwrite-Cache', 'hit')
-                ->send($data, 0)
+                ->send($data)
             ;
         }
 
@@ -319,11 +315,11 @@ App::get('/v1/avatars/favicon')
 
             $cache->save($key, $data);
 
-            $response
+            return $response
                 ->setContentType('image/x-icon')
                 ->addHeader('Expires', $date)
                 ->addHeader('X-Appwrite-Cache', 'miss')
-                ->send($data, 0)
+                ->send($data)
             ;
         }
 
@@ -339,18 +335,15 @@ App::get('/v1/avatars/favicon')
 
         $output = (empty($output)) ? $type : $output;
 
-        $response
-            ->setContentType('image/png')
-            ->addHeader('Expires', $date)
-            ->addHeader('X-Appwrite-Cache', 'miss')
-            ->send('', null)
-        ;
-
         $data = $resize->output($output, $quality);
 
         $cache->save($key, $data);
 
-        echo $data;
+        $response
+            ->setContentType('image/png')
+            ->addHeader('Expires', $date)
+            ->addHeader('X-Appwrite-Cache', 'miss')
+            ->send($data);
 
         unset($resize);
     }, ['response']);
